@@ -25,6 +25,7 @@ jobs:
 
     - name: Update Gaffer Version
       run: |
+        mvn -q org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.parent.version
         oldVersion=`mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.parent.version | grep -v '\['`
         newVersion=${{ github.event.inputs.version }}
 
