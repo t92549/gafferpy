@@ -14,18 +14,8 @@ jobs:
       VERSION_UPDATE_BRANCH: updating-gaffer-version-${{ github.event.inputs.version }}
 
     steps:
-    - name: Checkout branch
-      uses: actions/checkout@v2
-      with:
-        token: ${{ secrets.ADMIN_GITHUB_TOKEN }}
-
-    - name: Get branch name
-      run: echo "SOURCE_BRANCH=$(git branch --show-current)" >> $GITHUB_ENV
-
-    - name: Set up Github credentials
-      run: |
-        git config user.name Gaffer
-        git config user.email github-actions@github.com
+    - name: Checkout base branch
+      uses: actions/checkout@v3
 
     - name: Setup JDK
       uses: actions/setup-java@v2
@@ -34,12 +24,19 @@ jobs:
         java-version: '8'
 
     - name: Update Gaffer Version
-      run: ./cd/updateGafferVersion.sh ${{ github.event.inputs.version }}
+      run: |
+        oldVersion=`mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.parent.version | grep -v '\['`
+        newVersion=${{ github.event.inputs.version }}
+
+        sed -i'' "s/version>$oldVersion</version>$newVersion</g" pom.xml
+        sed -i'' "s/gaffer2:$oldVersion/gaffer2:$newVersion/g" NOTICES
+
+        sed -i'' "s/__version__ = \"$oldVersion\"/__version__ = \"$newVersion\"/g" python-shell/__init__.py
+        sed -i'' "s/__version__ = \"$oldVersion\"/__version__ = \"$newVersion\"/g" python-shell/src/__init__.py
+        sed -i'' "s/__version__ = \"$oldVersion\"/__version__ = \"$newVersion\"/g" python-shell/src/*/__init__.py
 
     - name: Submit PR
-      if: ${{ success() }}
-      uses: repo-sync/pull-request@v2
+      uses: peter-evans/create-pull-request@v4
       with:
-        source_branch: ${{ env.VERSION_UPDATE_BRANCH }}
-        destination_branch: ${{ env.SOURCE_BRANCH }}
-        github_token: ${{ secrets.ADMIN_GITHUB_TOKEN }}
+        commit-message: Updated Gaffer version to ${{ github.event.inputs.version }}
+        branch: ${{ env.VERSION_UPDATE_BRANCH }}
