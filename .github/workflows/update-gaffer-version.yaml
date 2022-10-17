@@ -36,6 +36,14 @@ jobs:
         sed -i'' "s#__version__ = \"$oldVersion\"#__version__ = \"$newVersion\"#g" python-shell/src/__init__.py
         sed -i'' "s#__version__ = \"$oldVersion\"#__version__ = \"$newVersion\"#g" python-shell/src/*/__init__.py
 
+    - name: Update gafferpy
+      run: |
+        newVersion=${{ github.event.inputs.version }}
+        curl -o spring-rest.jar https://repo.maven.apache.org/maven2/uk/gov/gchq/gaffer/spring-rest/$newVersion/spring-rest-$newVersion-exec.jar
+        java -Dgaffer.schemas=ui/example/road-traffic/schema/ -Dgaffer.storeProperties=ui/example/federated/federatedStore.properties -Dgaffer.graph.config=ui/example/federated/graphConfig.json -jar spring-rest.jar &
+        sleep 1m
+        python python-shell/src/generate.py
+
     - name: Submit PR
       uses: peter-evans/create-pull-request@v4
       with:
