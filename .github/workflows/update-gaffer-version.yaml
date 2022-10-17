@@ -39,5 +39,6 @@ jobs:
     - name: Submit PR
       uses: peter-evans/create-pull-request@v4
       with:
+        title: Updated Gaffer version to ${{ github.event.inputs.version }}
         commit-message: Updated Gaffer version to ${{ github.event.inputs.version }}
         branch: ${{ env.VERSION_UPDATE_BRANCH }}
